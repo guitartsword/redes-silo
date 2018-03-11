@@ -22,6 +22,7 @@ int lastButtonState = LOW;
 unsigned long lastDebounceTime = 0;
 unsigned long debounceDelay = 50;
 void setup() {
+    pinMode(LED_BUILTIN, OUTPUT);
     USE_SERIAL.begin(19200);
    // USE_SERIAL.setDebugOutput(true);
 
@@ -36,8 +37,19 @@ void setup() {
     }
 
     WiFi.mode(WIFI_STA);
-    WiFiMulti.addAP("Casa", "hondutel");
-
+    WiFi.disconnect();
+    WiFi.begin("guitart", "test1234");
+    while (WiFi.status() != WL_CONNECTED) {
+      delay(500);
+      Serial.print(".");
+      digitalWrite(LED_BUILTIN, LOW);
+    }
+    Serial.println("WiFi connected");
+    Serial.print("SSID: ");
+    Serial.println(WiFi.SSID());
+    Serial.print("IP address: ");
+    Serial.println(WiFi.localIP());
+    digitalWrite(LED_BUILTIN, HIGH);
 }
 
 void loop() {
@@ -64,7 +76,11 @@ void loop() {
 
       // only send message if the new button state is HIGH
       if (buttonState == HIGH) {
+        USE_SERIAL.printf("[MAIL NOTIFICATION] Input received, preparing...\n");
+        digitalWrite(LED_BUILTIN, LOW);
         sendMail();
+        digitalWrite(LED_BUILTIN, HIGH);
+        USE_SERIAL.printf("[MAIL NOTIFICATION] Input received, finished...\n");
       }
       
     }
@@ -81,7 +97,7 @@ void sendMail(){
       USE_SERIAL.print("[HTTP] begin...\n");
       // configure traged server and url
       //http.begin("https://192.168.1.12/test.html", "7a 9c f4 db 40 d3 62 5a 6e 21 bc 5c cc 66 c8 3e a1 45 59 38"); //HTTPS
-      http.begin("http://192.168.0.137:5000/notify");//HTTP
+      http.begin("http://mail-system.herokuapp.com/notify");//HTTP
 
       USE_SERIAL.print("[HTTP] POST...\n");
       // start connection and send HTTP headers
